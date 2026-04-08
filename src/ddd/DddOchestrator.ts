@@ -4,7 +4,7 @@ import ts from 'typescript';
 import path from 'node:path';
 import { DddAnalyzer } from './DddAnalyzer.js';
 import { RelationInferrer } from './RelationInferrer.js';
-import { DddPlantUmlRenderer } from './DddPlantUmlRenderer.js';
+import { DddPlantUmlRenderer } from './DddPlantUmlRender.js';
 import type { DddClassMeta } from './types.js';
 
 export interface OrchestratorOptions {
