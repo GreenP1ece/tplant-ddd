@@ -4,7 +4,8 @@ import type {
   DddClassMeta,
   DddRelation,
   DddStereotype,
-  DddMemberTag,
+  DddPropertyMeta,
+  DddMethodMeta,
 } from './types.js';
 import {
   STEREOTYPE_COLOR,
@@ -26,8 +27,6 @@ export class DddPlantUmlRenderer {
 
   private lines: string[] = [];
 
-  // ─── Публичный API ──────────────────────────────────────────────────────────
-
   renderDiagram(
     boundedContextName: string,
     classes: DddClassMeta[],
@@ -42,7 +41,6 @@ export class DddPlantUmlRenderer {
     this.pushLine(`package "${boundedContextName} «Bounded Context»" {`);
     this.pushLine('');
 
-    // Группируем по stereotype для блоков `together`
     const groups = this.groupByStereotype(classes);
     for (const group of groups) {
       if (group.length > 1) {
@@ -55,7 +53,7 @@ export class DddPlantUmlRenderer {
       this.pushLine('');
     }
 
-    this.pushLine('}'); // end package
+    this.pushLine('}');
     this.pushLine('');
 
     this.pushRelations(relations);
@@ -86,10 +84,8 @@ export class DddPlantUmlRenderer {
     const color = STEREOTYPE_COLOR[stereotype] ?? '#FFFFFF';
     const label = STEREOTYPE_LABEL[stereotype] ?? stereotype;
 
-    // Заголовок класса
     this.pushLine(`${indent}class ${cls.className} <<${label}>> ${color} {`);
 
-    // Инварианты
     if (cls.invariants.length > 0) {
       this.pushLine(`${indent}  <size:10><i>Invariants:</i></size>`);
       for (const inv of cls.invariants) {
@@ -98,22 +94,18 @@ export class DddPlantUmlRenderer {
       this.pushLine(`${indent}  __`);
     }
 
-    // Properties
     for (const prop of cls.properties) {
       this.pushLine(`${indent}  ${this.renderProperty(prop)}`);
     }
 
-    // Разделитель перед методами
     if (cls.properties.length > 0 && cls.methods.length > 0) {
       this.pushLine(`${indent}  __`);
     }
 
-    // Methods
     for (const method of cls.methods) {
       this.pushLine(`${indent}  ${this.renderMethod(method)}`);
     }
 
-    // Domain events section
     if (cls.allEmits.length > 0) {
       this.pushLine(`${indent}  __domain events__`);
       this.pushLine(`${indent}  .. emits ..`);
@@ -127,9 +119,9 @@ export class DddPlantUmlRenderer {
 
   private renderProperty(prop: DddPropertyMeta): string {
     const vis = prop.isPrivate ? '-' : '+';
-    const tagPart = prop.dddTag
-      ? `«${MEMBER_TAG_LABEL[prop.dddTag]}» `
-      : '';
+    // ← Фикс 7053: проверяем dddTag перед индексированием
+    const tagLabel = prop.dddTag !== undefined ? MEMBER_TAG_LABEL[prop.dddTag] : undefined;
+    const tagPart = tagLabel !== undefined ? `«${tagLabel}» ` : '';
     const arrayPart = prop.isArray ? '[]' : '';
     const optPart = prop.isOptional ? '?' : '';
     return `${vis} ${tagPart}${prop.name}: ${prop.typeName}${arrayPart}${optPart}`;
@@ -137,12 +129,11 @@ export class DddPlantUmlRenderer {
 
   private renderMethod(method: DddMethodMeta): string {
     const vis = method.isPrivate ? '-' : '+';
-    const tagPart = method.dddTag
-      ? `«${MEMBER_TAG_LABEL[method.dddTag]}» `
-      : '';
+    // ← Фикс 7053: проверяем dddTag перед индексированием
+    const tagLabel = method.dddTag !== undefined ? MEMBER_TAG_LABEL[method.dddTag] : undefined;
+    const tagPart = tagLabel !== undefined ? `«${tagLabel}» ` : '';
     const staticPart = method.isStatic ? '{static} ' : '';
-    const params = method.params ? method.params : '';
-    return `${vis} ${tagPart}${staticPart}${method.name}(${params}): ${method.returnType}`;
+    return `${vis} ${tagPart}${staticPart}${method.name}(${method.params}): ${method.returnType}`;
   }
 
   private pushRelations(relations: DddRelation[]): void {
@@ -150,8 +141,8 @@ export class DddPlantUmlRenderer {
     this.pushLine("' Relationships");
     for (const rel of relations) {
       const arrow = ARROWS[rel.kind] ?? '-->';
-      const cardinality = rel.cardinality ? ` "${rel.cardinality}"` : '';
-      const label = rel.label ? ` : ${rel.label}` : '';
+      const cardinality = rel.cardinality !== undefined ? ` "${rel.cardinality}"` : '';
+      const label = rel.label !== undefined ? ` : ${rel.label}` : '';
       this.pushLine(`${rel.from} ${arrow}${cardinality} ${rel.to}${label}`);
     }
   }
@@ -166,10 +157,6 @@ export class DddPlantUmlRenderer {
     this.pushLine('endlegend');
   }
 
-  /**
-   * Группирует классы по стереотипу для блоков `together {}`.
-   * Порядок групп: aggregate-root → value-object → entity → domain-event → остальные
-   */
   private groupByStereotype(classes: DddClassMeta[]): DddClassMeta[][] {
     const order: Array<DddStereotype | 'unknown'> = [
       'aggregate-root',
@@ -183,8 +170,9 @@ export class DddPlantUmlRenderer {
       'unknown',
     ];
 
-    const buckets = new Map<string, DddClassMeta[]>();
-    for (const o of order) buckets.set(o, []);
+    const buckets = new Map<string, DddClassMeta[]>(
+      order.map((o) => [o, []]),
+    );
 
     for (const cls of classes) {
       const key = cls.stereotype ?? 'unknown';
@@ -192,7 +180,6 @@ export class DddPlantUmlRenderer {
       bucket.push(cls);
     }
 
-    // Возвращаем непустые корзины
     return [...buckets.values()].filter((b) => b.length > 0);
   }
 
