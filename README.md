@@ -177,7 +177,7 @@ Include classes without `@ddd` annotations (useful for mixed diagrams).
 ## Scripts
 
 This repo currently runs upstream (Jest) tests and fork-specific (Vitest) tests separately:
-
+```typescript
 "scripts": {
   "build": "tsc",
   "dev": "tsx src/cli.ts",
@@ -189,7 +189,7 @@ This repo currently runs upstream (Jest) tests and fork-specific (Vitest) tests 
   "test": "vitest run",
   "test:watch": "vitest"
 }
-
+```
 ## Notes
 * This fork generates PlantUML text. Converting `.puml` to images (SVG/PNG) is usually done by PlantUML itself (local jar) or a PlantUML server, depending on your workflow.
 * Upstream `tplant` also supports Mermaid and image generation workflows; this fork focuses on DDD diagrams.
