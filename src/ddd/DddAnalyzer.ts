@@ -180,6 +180,7 @@ export class DddAnalyzer {
     const modifiers = node.modifiers ?? [];
 
     return {
+      kind: 'method',
       name,
       isStatic:   modifiers.some((m) => m.kind === ts.SyntaxKind.StaticKeyword),
       isPrivate:  modifiers.some((m) => m.kind === ts.SyntaxKind.PrivateKeyword),
@@ -193,6 +194,7 @@ export class DddAnalyzer {
   private analyzeAccessor(node: ts.GetAccessorDeclaration): DddMethodMeta {
     const name = node.name.getText();
     return {
+      kind: 'getter',
       name,
       isStatic:   false,
       isPrivate:  false,

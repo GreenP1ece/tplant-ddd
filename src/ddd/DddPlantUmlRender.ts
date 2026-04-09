@@ -127,14 +127,18 @@ export class DddPlantUmlRenderer {
     return `${vis} ${tagPart}${prop.name}: ${prop.typeName}${arrayPart}${optPart}`;
   }
 
-  private renderMethod(method: DddMethodMeta): string {
-    const vis = method.isPrivate ? '-' : '+';
-    // ← Фикс 7053: проверяем dddTag перед индексированием
-    const tagLabel = method.dddTag !== undefined ? MEMBER_TAG_LABEL[method.dddTag] : undefined;
-    const tagPart = tagLabel !== undefined ? `«${tagLabel}» ` : '';
-    const staticPart = method.isStatic ? '{static} ' : '';
-    return `${vis} ${tagPart}${staticPart}${method.name}(${method.params}): ${method.returnType}`;
+private renderMethod(method: DddMethodMeta): string {
+  const vis = method.isPrivate ? '-' : '+';
+  const tagLabel = method.dddTag !== undefined ? MEMBER_TAG_LABEL[method.dddTag] : undefined;
+  const tagPart = tagLabel !== undefined ? `«${tagLabel}» ` : '';
+  const staticPart = method.isStatic ? '{static} ' : '';
+
+  if (method.kind === 'getter') {
+    return `${vis} ${tagPart}${method.name}: ${method.returnType}`;
   }
+
+  return `${vis} ${tagPart}${staticPart}${method.name}(${method.params}): ${method.returnType}`;
+}
 
   private pushRelations(relations: DddRelation[]): void {
     if (relations.length === 0) return;
@@ -178,6 +182,10 @@ export class DddPlantUmlRenderer {
       const key = cls.stereotype ?? 'unknown';
       const bucket = buckets.get(key) ?? buckets.get('unknown')!;
       bucket.push(cls);
+    }
+
+    for (const bucket of buckets.values()) {
+      bucket.sort((a, b) => a.className.localeCompare(b.className));
     }
 
     return [...buckets.values()].filter((b) => b.length > 0);

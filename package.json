@@ -19,7 +19,7 @@
     "url": "git+https://github.com/bafolts/tplant-ddd.git"
   },
   "license": "GPL-3.0",
-  "author": "Brian Folts",
+  "author": "Green_Piece",
   "contributors": [
     "Marcos V. Rubido <me@marcosvrs.com> (https://marcosvrs.com/)"
   ],
@@ -37,8 +37,10 @@
     "build:dev": "tsc --sourceMap -w",
     "lint": "eslint src --ext .ts",
     "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
-    "test": "jest"
+    "prepublishOnly": "npm run build",
+    "test-jest": "jest",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "commander": "^12.0.0",

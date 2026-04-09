@@ -1,0 +1,111 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DddOrchestrator diagram > generates stable PlantUML for Note bounded context 1`] = `
+"@startuml
+
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+title Note Module (Bounded Context)
+caption Generated from code with DDD stereotypes
+
+package "Note «Bounded Context»" {
+
+  class Note <<Aggregate Root>> #FEFECE {
+    <size:10><i>Invariants:</i></size>
+    <size:9>• Title must not be empty</size>
+    <size:9>• Content must be valid NoteContent</size>
+    __
+    + «id» id: NoteId
+    + «id» creatorId: CreatorId
+    - title: string
+    - «value-object» content: NoteContent
+    - «ref» directoryId: DirectoryId
+    - mood: Mood
+    - «events» events: DomainEvent[]
+    __
+    + «factory» {static} create(...): Result<Note>
+    + «command» updateContent(content: NoteContent): Result<void>
+    + «command» moveToDirectory(directoryId: DirectoryId | null): Result<void>
+    + «query» wordCount: number
+    __domain events__
+    .. emits ..
+    NoteCreatedEvent
+    NoteContentUpdatedEvent
+    NoteMovedEvent
+  }
+
+  together {
+    class NoteContent <<Value Object>> #E8F5E9 {
+      - «immutable» raw: string
+      - «immutable» tags: Tag[]
+      - «immutable» links: NoteId[]
+      __
+      + «factory» {static} create(...): Result<NoteContent>
+      + wordCount(): number
+    }
+    class Tag <<Value Object>> #E8F5E9 {
+      + name: string
+      + color: string?
+    }
+  }
+
+  together {
+    class NoteContentUpdatedEvent <<Domain Event>> #FFF3E0 {
+      + noteId: NoteId
+      + newContent: NoteContent
+      + updatedAt: Date
+    }
+    class NoteCreatedEvent <<Domain Event>> #FFF3E0 {
+      + noteId: NoteId
+      + title: string
+      + createdAt: Date
+    }
+    class NoteMovedEvent <<Domain Event>> #FFF3E0 {
+      + noteId: NoteId
+      + fromDirectoryId: DirectoryId?
+      + toDirectoryId: DirectoryId?
+    }
+  }
+
+  together {
+    class DirectoryId <<Identifier>> #ECEFF1 {
+      + value: string
+    }
+    class NoteId <<Identifier>> #ECEFF1 {
+      + value: string
+    }
+  }
+
+}
+
+' Relationships
+Note --> NoteId : identified by
+Note *--> NoteContent : contains
+Note ..> DirectoryId : references
+Note ..> NoteCreatedEvent : raises
+Note ..> NoteContentUpdatedEvent : raises
+Note ..> NoteMovedEvent : raises
+NoteContent *--> "*" Tag
+NoteContent *--> "*" NoteId
+NoteCreatedEvent --> NoteId
+NoteContentUpdatedEvent --> NoteId
+NoteContentUpdatedEvent --> NoteContent
+NoteMovedEvent --> NoteId
+NoteMovedEvent --> DirectoryId
+
+legend right
+  |= Color |= Stereotype |
+  | <#FEFECE> | Aggregate Root |
+  | <#E8F5E9> | Value Object |
+  | <#E3F2FD> | Entity |
+  | <#FFF3E0> | Domain Event |
+  | <#F3E5F5> | Repository |
+  | <#FCE4EC> | Factory |
+  | <#E0F7FA> | Domain Service |
+  | <#ECEFF1> | Identifier |
+endlegend
+
+@enduml"
+`;

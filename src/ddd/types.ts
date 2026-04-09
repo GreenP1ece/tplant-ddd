@@ -37,6 +37,7 @@ export interface DddPropertyMeta {
 }
 
 export interface DddMethodMeta {
+  kind: 'method' | 'getter';
   name: string;
   isStatic: boolean;
   isPrivate: boolean;
